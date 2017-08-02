@@ -8,4 +8,4 @@ var SongSchema = new Schema({
 
 var Song = mongoose.model('Song', SongSchema);
 
-module.exports = SongSchema;
+module.exports = Song;

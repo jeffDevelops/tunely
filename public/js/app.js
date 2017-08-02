@@ -1,8 +1,4 @@
-/* CLIENT-SIDE JS */
-
 $(document).ready(function() {
-  var kanyeAlbums; 
-
   //grab Kanye Albums from backend and immediately render them
   $.ajax({url: '/api/albums', success: function(result) {
     result.forEach(renderAlbum);
@@ -12,12 +8,48 @@ $(document).ready(function() {
   $('form').on('submit', function(event) {
     event.preventDefault();
     var formData = $('form').serialize();
-    console.log(formData);
-    $.post('/api/albums', formData);
+    $.post('/api/albums', formData).done(function() {
+      console.log('Form data posted.');
+      $.ajax({ url: '/api/albums', success:function(result) {
+        var $albums = $('#albums');
+        $albums.empty();
+        result.forEach(renderAlbum);
+      }});
+    });
     $('form').trigger('reset');
   });
 
+  $('#albums').on('click', '.add-song', function(e) {
+    /* CLIENT-SIDE JS */
+    var id = $(this).parents('.album').data('album-id'); // "5665ff1678209c64e51b4e7b"
+    console.log('id', id);
+    $('#songModal').data('album-id', id);
+    $('#songModal').modal();
+    $('#saveSong').click(function(event) {
+      console.log(id);
+      var $song = $('#songName').val();
+      var $trackNumber = $('#trackNumber').val();
+      var stuffToAjax = {
+        song: $song,
+        trackNumber: parseInt($trackNumber)
+      };
+      console.log(stuffToAjax.trackNumber + '. ' + '"' + stuffToAjax.song + '"');
+      event.preventDefault();
+      var URL = '/api/albums/' + id + '/songs';
+      $.post(URL, stuffToAjax).done(function() {
+        $.ajax({url: '/api/albums/' + id, success: function(result) {
+          console.dir(result);
+          console.log(id);
+          var $targetedAlbum = $('data-album-id[value=' + result._id + ']');
+          $targetedAlbum.remove();
+          renderAlbum(result);
+        }});
+      });
+      $('#songModal').modal('hide');
+    });
+  });
 });
+
 
 function renderAlbum(album) {
   var albumHtml =
@@ -57,28 +89,25 @@ function renderAlbum(album) {
   "                  </div>" +
   "                </div>" +
   "                <!-- end of album internal row -->" +
-
   "              </div>" + // end of panel-body
-
   "              <div class='panel-footer'>" +
   "               <button class='btn btn-primary add-song'>Add Song</button>" +
   "              </div>" +
-
   "            </div>" +
   "          </div>" +
   "          <!-- end one album -->";
-     $('#albums').append(albumHtml);
+     $('#albums').prepend(albumHtml);
 }
 
 function buildSongsHTML(songs) {
-  console.log(songs);
   var songText = '- ';
   var songsHTML = " ";
   songs.forEach(function(song) {
     songText = '(' + song.trackNumber + ') ' + song.name + ' -';
     songsHTML += songText + " ";
-    console.log(songsHTML);
   });
   console.log(songsHTML);
   return songsHTML;
 }
+
+

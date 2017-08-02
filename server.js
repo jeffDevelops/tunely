@@ -5,6 +5,7 @@ var express = require('express');
 // generate a new express app and call it 'app'
 var app = express();
 var bodyParser = require('body-parser');
+var util = require('util');
 
 // serve static files from public folder
 app.use(express.static(__dirname + '/public'));
@@ -71,6 +72,32 @@ app.post('/api/albums', function(req, res) {
       doc.save();
     });
   res.json(req.body);
+});
+
+app.post('/api/albums/:album_id/songs', function(req, res) {
+  console.log("HEYYYYYOOOO from the song post route.");
+  console.log(req.params);
+  console.log('req.body.song: ' + req.body.song + ' req.body.trackNumber: ' + req.body.trackNumber);
+  // songObject = {
+  //   name: req.body.song,
+  //   trackNumber: req.body.trackNumber
+  // };
+  db.Album.findOne({ '_id': req.params.album_id }, function(err, doc) {
+    if(err) throw err;
+    doc.songs.push({ name: req.body.song, trackNumber: req.body.trackNumber });
+    console.log('After push: ' + doc.songs);
+    doc.save(function(err, savedDoc) {
+      res.json(doc);
+    });
+  });
+});
+
+app.get('/api/albums/:id', function(req, res) {
+  db.Album.findOne({ '_id': req.params.id }, function(err, doc) {
+    if (err) throw err;
+    console.dir('GET doc: ' + doc);
+    res.json(doc);
+  });
 });
 
 /**********
